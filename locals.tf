@@ -18,13 +18,12 @@ locals {
   }
 
   # ── Compliance flags ──────────────────────────────────────────────────────────
-  is_strict = var.compliance_profile == "hipaa"
+  is_hipaa   = var.compliance_profile == "hipaa"
+  is_pci_dss = var.compliance_profile == "pci_dss"
+  is_strict  = local.is_hipaa || local.is_pci_dss
 
-  # HIPAA: force point-in-time recovery on DynamoDB
   dynamodb_pitr_enabled = local.is_strict
-
-  # HIPAA: CloudWatch log retention (365 days vs 90 days)
-  log_retention_days = local.is_strict ? 365 : 90
+  log_retention_days    = local.is_strict ? 365 : 90
 
   # ── DynamoDB attribute definitions ────────────────────────────────────────────
   dynamodb_attributes = concat(

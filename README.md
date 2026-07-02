@@ -139,6 +139,7 @@ aws sns subscribe \
 |---|---|
 | `general` | KMS rotation on, 90-day log retention, 3-retry DLQ |
 | `hipaa` | DynamoDB PITR + deletion protection, Lambda concurrency cap (50), 1-retry DLQ, 365-day log retention |
+| `pci_dss` | DynamoDB PITR + deletion protection, Lambda concurrency cap (25), 1-retry DLQ, 365-day log retention |
 
 ---
 
@@ -180,7 +181,7 @@ arc-event-driven-arch-blueprint/
 |---|---|
 | **Minutes, not days** | A secured event pipeline normally requiring days of IAM/SQS/DLQ wiring deploys with four inputs and one command. |
 | **Secure by default** | Single KMS CMK encrypts SNS, SQS, DynamoDB, Lambda env vars, and S3. No plaintext data at rest. |
-| **Compliance-ready** | Built-in `general` / `hipaa` profiles flip on DynamoDB PITR, Lambda concurrency caps, tighter DLQ retries, and 365-day log retention — no manual edits. |
+| **Compliance-ready** | Built-in `general` / `hipaa` / `pci_dss` profiles flip on DynamoDB PITR, Lambda concurrency caps, tighter DLQ retries, and 365-day log retention — no manual edits. |
 | **Proven building blocks** | Every resource comes from a published, versioned SourceFuse ARC module. Upgrades are a version bump, not a rewrite. |
 | **Failure-safe** | DLQ + S3 archive ensure no event is silently dropped. Dead events are inspectable and replayable. |
 | **Portable & auditable** | Pure Terraform. Version-controlled, reproducible across environments and accounts. |
@@ -200,7 +201,8 @@ arc-event-driven-arch-blueprint/
 ├── terraform.tfvars.example  # copy to terraform.tfvars
 ├── examples/                 # ready-to-use tfvars per compliance profile
 │   ├── general.tfvars
-│   └── hipaa.tfvars
+│   ├── hipaa.tfvars
+│   └── pci_dss.tfvars
 ├── docs/
 │   ├── INSTALL.md            # macOS · Linux · Windows setup guide
 │   └── DEPLOYMENT.md        # full deployment reference + rollback
