@@ -82,31 +82,44 @@ No hand-wiring of IAM, KMS grants, SQS redrive policies, or Lambda triggers. The
 - **An S3 bucket** for Lambda deployment packages (create once, reuse)
 - **A Lambda deployment zip** uploaded to that bucket
 
-### 2. Configure
+### 2. Clone
 
 ```bash
-git clone https://github.com/sourcefuse/arc-event-driven-arch-blueprint.git
+git clone https://github.com/urbanlotusai/arc-event-driven-arch-blueprint.git
 cd arc-event-driven-arch-blueprint
-
-cp examples/general.tfvars terraform.tfvars
 ```
 
-Edit the four mandatory values in `terraform.tfvars`:
+This blueprint uses **independent per-module Terraform state** — there is no root `main.tf`. Each `modules/NN-name/` is applied on its own, with cross-module values (like the KMS key ARN) resolved via `terraform_remote_state` data sources rather than a parent module.
 
-| Variable | Example |
-|---|---|
-| `environment` | `prod` |
-| `namespace` | `myorg` |
-| `lambda_s3_bucket` | `myorg-lambda-artifacts` |
-| `lambda_s3_key` | `consumers/handler-v1.0.0.zip` |
+### 3. Bootstrap the state backend (once per environment)
 
-### 3. Deploy
+```bash
+make bootstrap ENV=dev REGION=us-east-1 NAMESPACE=myorg
+```
 
-| Step | With `make` | Raw Terraform |
+Creates the S3 state bucket + DynamoDB lock table every module's backend uses.
+
+### 4. Deploy all modules
+
+```bash
+make apply ENV=dev REGION=us-east-1 NAMESPACE=myorg
+```
+
+This runs `terraform init` + `apply` across `modules/01-kms` through `modules/06-lambda` in order. The `lambda_s3_bucket` and `lambda_s3_key` variables (no default) must be supplied — either edit `modules/06-lambda/tfvars/general.tfvars` or pass `-var` overrides.
+
+### Deploy a single module with a compliance profile
+
+```bash
+./scripts/apply-module.sh 06-lambda dev us-east-1 hipaa
+```
+
+Copies `modules/06-lambda/tfvars/hipaa.tfvars` → `terraform.tfvars` for that module, then inits/plans/applies it alone.
+
+| Step | With `make` (all modules) | Single module |
 |---|---|---|
-| Validate | `make validate` | `terraform init -backend=false && terraform validate` |
-| Preview | `make plan` | `terraform plan` |
-| Deploy | `make apply` | `terraform init && terraform apply` |
+| Validate | `make validate` | `cd modules/<NN-name> && terraform validate` |
+| Preview | `make plan` | `./scripts/apply-module.sh <name> <env> <region> <profile>` then inspect the plan |
+| Deploy | `make apply` | `./scripts/apply-module.sh <name> <env> <region> <profile>` |
 
 ### 4. Wire SQS → Lambda
 
@@ -139,7 +152,9 @@ aws sns subscribe \
 |---|---|
 | `general` | KMS rotation on, 90-day log retention, 3-retry DLQ |
 | `hipaa` | DynamoDB PITR + deletion protection, Lambda concurrency cap (50), 1-retry DLQ, 365-day log retention |
-| `pci_dss` | DynamoDB PITR + deletion protection, Lambda concurrency cap (25), 1-retry DLQ, 365-day log retention |
+| `pci` | DynamoDB PITR + deletion protection, Lambda concurrency cap (50), 1-retry DLQ, 365-day log retention |
+
+Apply a profile to any module with `./scripts/apply-module.sh <module> <env> <region> <profile>`.
 
 ---
 
@@ -175,32 +190,31 @@ terraform output kms_key_arn           # CMK
 
 ```
 arc-event-driven-arch-blueprint/
-├── main.tf                   # 6 ARC module blocks, in dependency order
-├── variables.tf              # all inputs with types & descriptions
-├── locals.tf                 # naming, tags, compliance overlays
-├── data.tf                   # caller identity, KMS policy
-├── outputs.tf                # topic/queue/table/function ARNs
-├── version.tf                # Terraform + AWS provider pins
-├── .terraform-version        # tfenv pin (1.9.8)
-├── terraform.tfvars.example  # copy to terraform.tfvars
-├── modules/                  # one numbered wrapper per ARC module
+├── bootstrap/                 # creates the S3 + DynamoDB state backend (apply first)
+│   ├── main.tf · variables.tf · outputs.tf
+├── modules/                   # each folder is an independent Terraform root
 │   ├── 01-kms/
+│   │   ├── config.hcl         # static backend key
+│   │   ├── main.tf            # own backend "s3" {}, own provider, own module block
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── tfvars/{general,hipaa,pci}.tfvars
 │   ├── 02-s3/
 │   ├── 03-dynamodb/
 │   ├── 04-sns/
 │   ├── 05-sqs/
 │   └── 06-lambda/
+├── scripts/
+│   └── apply-module.sh        # apply one module with a chosen compliance profile
+├── Makefile                   # bootstrap / init / plan / apply / validate / fmt
+├── .terraform-version         # tfenv pin (1.9.8)
 ├── sample-app/                # publisher script proving the pipeline end-to-end
-├── examples/                 # ready-to-use tfvars per compliance profile
-│   ├── general.tfvars
-│   ├── hipaa.tfvars
-│   └── pci_dss.tfvars
 ├── docs/
-│   ├── INSTALL.md            # macOS · Linux · Windows setup guide
-│   └── DEPLOYMENT.md        # full deployment reference + rollback
-├── GETTING-STARTED.md        # beginner walkthrough
+│   ├── INSTALL.md             # macOS · Linux · Windows setup guide
+│   └── DEPLOYMENT.md          # full deployment reference + rollback
+├── GETTING-STARTED.md         # beginner walkthrough
 ├── CONTRIBUTING.md
-├── CHANGELOG.md · LICENSE · NOTICE · Makefile · VERSION
+├── CHANGELOG.md · LICENSE · NOTICE · VERSION
 └── README.md
 ```
 
@@ -211,7 +225,7 @@ arc-event-driven-arch-blueprint/
 - **[GETTING-STARTED.md](GETTING-STARTED.md)** — zero-to-live walkthrough for first-timers
 - **[docs/INSTALL.md](docs/INSTALL.md)** — install Terraform & AWS CLI on macOS / Linux / Windows
 - **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — full deployment reference, post-apply steps, rollback
-- **[examples/README.md](examples/README.md)** — compliance-profile example files
+- **`modules/*/tfvars/{general,hipaa,pci}.tfvars`** — per-module compliance-profile example files
 
 ---
 

@@ -1,36 +1,61 @@
-variable "table_name" {
-  type = string
+variable "namespace" {
+  description = "Organization or team namespace"
+  type        = string
+  default     = "arc"
 }
 
-variable "hash_key" {
-  type = string
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "dev"
 }
 
-variable "range_key" {
-  type    = string
-  default = null
-}
-
-variable "attributes" {
-  type = any
-}
-
-variable "billing_mode" {
-  type = string
-}
-
-variable "server_side_encryption_kms_key_arn" {
-  type = string
-}
-
-variable "point_in_time_recovery_enabled" {
-  type = bool
-}
-
-variable "deletion_protection_enabled" {
-  type = bool
+variable "region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
 }
 
 variable "tags" {
-  type = map(string)
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default = {
+    ManagedBy = "Terraform"
+    Project   = "arc-event-driven-arch-blueprint"
+  }
+}
+
+variable "state_bucket_name" {
+  description = "S3 bucket name for Terraform state (used to read 01-kms remote state)"
+  type        = string
+}
+
+variable "hash_key" {
+  description = "DynamoDB event-store partition key attribute name."
+  type        = string
+  default     = "event_id"
+}
+
+variable "range_key" {
+  description = "DynamoDB sort key attribute name. Leave empty for no sort key."
+  type        = string
+  default     = "event_time"
+}
+
+variable "billing_mode" {
+  description = "DynamoDB billing mode: PAY_PER_REQUEST or PROVISIONED."
+  type        = string
+  default     = "PAY_PER_REQUEST"
+}
+
+variable "point_in_time_recovery_enabled" {
+  description = "Enable point-in-time recovery for the event-store table."
+  type        = bool
+  default     = false
+}
+
+variable "deletion_protection_enabled" {
+  description = "Prevent accidental deletion of the event-store table."
+  type        = bool
+  default     = false
 }
