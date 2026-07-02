@@ -1,0 +1,14 @@
+{
+  "name": "arc-event-driven-arch-sample",
+  "version": "1.0.0",
+  "description": "Sample event publisher proving the ARC Event-Driven Architecture Blueprint end-to-end",
+  "main": "publish.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "publish-event": "node publish.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.529.1"
+  }
+}

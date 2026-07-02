@@ -3,14 +3,12 @@
 #    Outputs consumed by: module.sns, module.sqs, module.dynamodb, module.lambda
 # ═══════════════════════════════════════════════════════════════════════════════
 module "kms" {
-  source  = "sourcefuse/arc-kms/aws"
-  version = "1.0.11"
+  source = "./modules/01-kms"
 
   alias                   = local.kms_alias
   policy                  = data.aws_iam_policy_document.kms.json
   description             = "CMK for ${local.name_prefix} event-driven architecture"
   deletion_window_in_days = var.kms_deletion_window
-  enable_key_rotation     = true
 
   tags = local.tags
 }
@@ -20,8 +18,7 @@ module "kms" {
 #    Outputs consumed by: (application code reads/writes directly)
 # ═══════════════════════════════════════════════════════════════════════════════
 module "s3" {
-  source  = "sourcefuse/arc-s3/aws"
-  version = "0.0.7"
+  source = "./modules/02-s3"
 
   name = local.archive_bucket
 
@@ -46,8 +43,7 @@ module "s3" {
 #    Outputs consumed by: module.lambda (via environment variable at runtime)
 # ═══════════════════════════════════════════════════════════════════════════════
 module "dynamodb" {
-  source  = "sourcefuse/arc-dynamodb/aws"
-  version = "0.0.1"
+  source = "./modules/03-dynamodb"
 
   table_name   = local.table_name
   hash_key     = var.dynamodb_hash_key
@@ -55,7 +51,6 @@ module "dynamodb" {
   attributes   = local.dynamodb_attributes
   billing_mode = var.dynamodb_billing_mode
 
-  server_side_encryption_enabled     = true
   server_side_encryption_kms_key_arn = module.kms.key_arn
 
   # HIPAA: enable point-in-time recovery for event auditability
@@ -74,10 +69,9 @@ module "dynamodb" {
 #    Outputs consumed by: module.sqs (subscriptions wired via aws_sns_topic_subscription)
 # ═══════════════════════════════════════════════════════════════════════════════
 module "sns" {
-  source  = "sourcefuse/arc-sns/aws"
-  version = "0.0.4"
+  source = "./modules/04-sns"
 
-  name             = local.sns_topic_name
+  name              = local.sns_topic_name
   kms_master_key_id = module.kms.key_id
 
   # Wire SQS queue as a subscriber after both SNS + SQS are created.
@@ -98,15 +92,14 @@ module "sns" {
 #    Outputs consumed by: module.lambda (event source mapping)
 # ═══════════════════════════════════════════════════════════════════════════════
 module "sqs" {
-  source  = "sourcefuse/arc-sqs/aws"
-  version = "0.0.3"
+  source = "./modules/05-sqs"
 
   name = local.sqs_queue_name
 
   message_config = {
     visibility_timeout        = var.sqs_visibility_timeout
     retention_seconds         = var.sqs_message_retention_seconds
-    receive_wait_time_seconds = 20  # long-polling reduces empty receives
+    receive_wait_time_seconds = 20 # long-polling reduces empty receives
   }
 
   # Encrypt queue with CMK
@@ -122,7 +115,7 @@ module "sqs" {
     name              = "${local.sqs_queue_name}-dlq"
     max_receive_count = local.is_strict ? 1 : 3
     # HIPAA: single retry before DLQ ensures no duplicate processing of PHI
-    message_retention_seconds = 1209600  # 14 days (max)
+    message_retention_seconds = 1209600 # 14 days (max)
   }
 
   tags = local.tags
@@ -133,8 +126,7 @@ module "sqs" {
 #    Add aws_lambda_event_source_mapping after apply to wire SQS → Lambda.
 # ═══════════════════════════════════════════════════════════════════════════════
 module "lambda" {
-  source  = "sourcefuse/arc-lambda-function/aws"
-  version = "0.0.2"
+  source = "./modules/06-lambda"
 
   function_name = local.function_name
 
@@ -150,7 +142,6 @@ module "lambda" {
   # HIPAA: cap concurrency to limit blast radius
   reserved_concurrent_executions = local.is_strict ? 50 : -1
 
-  create_log_group      = true
   log_retention_in_days = local.log_retention_days
 
   # Wire event-store context into the function at runtime

@@ -158,23 +158,6 @@ terraform output kms_key_arn           # CMK
 
 ---
 
-## Project structure
-
-```
-arc-event-driven-arch-blueprint/
-├── main.tf                   # 6 ARC module blocks, in dependency order
-├── variables.tf              # all inputs with types & descriptions
-├── locals.tf                 # naming, tags, compliance overlays
-├── data.tf                   # caller identity, KMS policy
-├── outputs.tf                # topic/queue/table/function ARNs
-├── version.tf                # Terraform + AWS provider pins
-├── terraform.tfvars.example  # copy to terraform.tfvars
-├── examples/                 # ready-to-use tfvars per compliance profile
-├── docs/                     # install + deployment guides
-├── GETTING-STARTED.md
-└── README.md
-```
-
 ## Why use this blueprint?
 
 | Advantage | What it means for you |
@@ -198,7 +181,16 @@ arc-event-driven-arch-blueprint/
 ├── data.tf                   # caller identity, KMS policy
 ├── outputs.tf                # topic/queue/table/function ARNs
 ├── version.tf                # Terraform + AWS provider pins
+├── .terraform-version        # tfenv pin (1.9.8)
 ├── terraform.tfvars.example  # copy to terraform.tfvars
+├── modules/                  # one numbered wrapper per ARC module
+│   ├── 01-kms/
+│   ├── 02-s3/
+│   ├── 03-dynamodb/
+│   ├── 04-sns/
+│   ├── 05-sqs/
+│   └── 06-lambda/
+├── sample-app/                # publisher script proving the pipeline end-to-end
 ├── examples/                 # ready-to-use tfvars per compliance profile
 │   ├── general.tfvars
 │   ├── hipaa.tfvars
