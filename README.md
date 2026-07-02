@@ -178,12 +178,12 @@ arc-event-driven-arch-blueprint/
 
 | Advantage | What it means for you |
 |---|---|
-| ⚡ **Minutes, not days** | A secured event pipeline normally requiring days of IAM/SQS/DLQ wiring deploys with four inputs and one command. |
-| 🔒 **Secure by default** | Single KMS CMK encrypts SNS, SQS, DynamoDB, Lambda env vars, and S3. No plaintext data at rest. |
-| 🏛️ **Compliance-ready** | Built-in `general` / `hipaa` profiles flip on DynamoDB PITR, Lambda concurrency caps, tighter DLQ retries, and 365-day log retention — no manual edits. |
-| 🧩 **Proven building blocks** | Every resource comes from a published, versioned SourceFuse ARC module. Upgrades are a version bump, not a rewrite. |
-| 🔁 **Failure-safe** | DLQ + S3 archive ensure no event is silently dropped. Dead events are inspectable and replayable. |
-| 📦 **Portable & auditable** | Pure Terraform. Version-controlled, reproducible across environments and accounts. |
+| **Minutes, not days** | A secured event pipeline normally requiring days of IAM/SQS/DLQ wiring deploys with four inputs and one command. |
+| **Secure by default** | Single KMS CMK encrypts SNS, SQS, DynamoDB, Lambda env vars, and S3. No plaintext data at rest. |
+| **Compliance-ready** | Built-in `general` / `hipaa` profiles flip on DynamoDB PITR, Lambda concurrency caps, tighter DLQ retries, and 365-day log retention — no manual edits. |
+| **Proven building blocks** | Every resource comes from a published, versioned SourceFuse ARC module. Upgrades are a version bump, not a rewrite. |
+| **Failure-safe** | DLQ + S3 archive ensure no event is silently dropped. Dead events are inspectable and replayable. |
+| **Portable & auditable** | Pure Terraform. Version-controlled, reproducible across environments and accounts. |
 
 ---
 
