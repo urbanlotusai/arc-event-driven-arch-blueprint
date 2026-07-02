@@ -1,0 +1,19 @@
+# ── Mandatory ─────────────────────────────────────────────────────────────────
+environment      = "prod"
+namespace        = "myorg"
+lambda_s3_bucket = "myorg-lambda-artifacts"
+lambda_s3_key    = "consumers/handler-v1.0.0.zip"
+
+# ── Profile ───────────────────────────────────────────────────────────────────
+compliance_profile = "general"
+
+# ── Optional overrides (defaults shown) ───────────────────────────────────────
+# region                        = "us-east-1"
+# dynamodb_hash_key             = "event_id"
+# dynamodb_range_key            = "event_time"
+# sqs_visibility_timeout        = 180
+# sqs_message_retention_seconds = 345600
+# lambda_runtime                = "nodejs20.x"
+# lambda_memory_size            = 512
+# lambda_timeout                = 30
+# archive_retention_days        = 90
